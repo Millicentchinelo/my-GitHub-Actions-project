@@ -1,0 +1,63 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: user/app:latest
+
+
+
+  Deploy:
+  
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - id: deploy
+        uses: bitovi/github-actions-deploy-github-runner-to-ec2@v0.1.3
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID_DEVELOPMENT }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEVELOPMENT }}
+          aws_default_region: us-west-2 
+          
+
+          aws_vpc_id: vpc-044c8e40fc700fef2
+          aws_vpc_subnet_id: subnet-0573b43cbc86573ff
+
+          ec2_instance_type: t2.medium
+          ec2_instance_public_ip: true
+          
+          
+          repo_url: https://github.com/Millicentchinelo/my-GitHub-Actions-project
+          repo_access_token: ${{ secrets.RUNNER_TOKEN }}
+
+          stack_destroy: false
+          tf_state_bucket_destroy: true

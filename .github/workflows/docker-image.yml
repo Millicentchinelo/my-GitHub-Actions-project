@@ -31,7 +31,8 @@ jobs:
         with:
           context: .
           push: true
-          tag: latest
+          tags: latest
+
 
 
 
